@@ -20,7 +20,7 @@
 
 <h2 id="Introduction">Introduction</h2>
 
-Inspired by [Rcell](https://space.bilibili.com/343303724/?spm_id_from=333.999.0.0), I replaced the `TextEncoder` in VITS with the `ContentEncoder` used in [Soft-VC](https://github.com/bshall/soft-vc) to achieve any-to-one voice conversion with non-parallel data. Of course, any-to-many voice converison is also doable!
+Inspired by [Rcell](https://space.bilibili.com/343303724/?spm_id_from=333.999.0.0), I replaced the word embedding layer of `TextEncoder` in VITS with the output of the `ContentEncoder` used in [Soft-VC](https://github.com/bshall/soft-vc) to achieve any-to-one voice conversion with non-parallel data. Of course, any-to-many voice converison is also doable!
 
 If you are interested in the performance of Soft-VC, you may refer to [this demo](https://colab.research.google.com/drive/11L10uz2VsF3_YCanXKYiA3mo9eMW4ueL?usp=sharing). I've trained a aoustic model for
 3 days with about 2000 audio clips. 
