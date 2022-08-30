@@ -45,7 +45,7 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 
 ![natsume](assets/cover2.png)
 
--Description
+- Description
 
 - Demo
 
