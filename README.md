@@ -12,6 +12,8 @@
 
 <h2 id="Update">Update</h2>
 
+- 29/8 Start training model of Accelerator!
+
 <h2 id="Introduction">Introduction</h2>
 
 Inspired by [Rcell](https://space.bilibili.com/343303724/?spm_id_from=333.999.0.0), I replaced the `TextEncoder` in VITS with the `ContentEncoder` used in [Soft-VC](https://github.com/bshall/soft-vc) to achieve any-to-one voice conversion with non-parallel data. Of course, any-to-many voice converison is also doable!
