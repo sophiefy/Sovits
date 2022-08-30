@@ -65,7 +65,7 @@ Your dataset should be like:
 
 Utilize the content encoder to extract speech units in the audio.
 
-For more information, refer to this repo.
+For more information, refer to [this repo](https://github.com/bshall/acoustic-model).
 
 ```python
 cd hubert
