@@ -24,11 +24,15 @@ With regard to the dataset, I collected about 2000 audio clips from [ピオフ�
 
 <h3 id="Accelerator">A Certain Scientific Accelerator</h3>
 
+![accelerator](assets/cover4.png)
+
 - Description
 
 - Demo
 
 <h3 id="Index">A Certain Magical Index</h3>
+
+![index](assets/cover3.png)
 
 - Description
 
