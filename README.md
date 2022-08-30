@@ -5,7 +5,8 @@
 - [Update](#Update)
 - [Introduction](#Introduction)
 - [Models](#Models)
-  - [A Certain Scientific Accelerator[(#Accelerator)
+  - [A Certain Scientific Accelerator](#Accelerator)
+  - [A Certain Magical Index](#Index)
 - [Contact](#Contact)
 - [References](#References)
 
