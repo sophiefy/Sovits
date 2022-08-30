@@ -7,6 +7,7 @@
 - [Models](#Models)
   - [A Certain Scientific Accelerator](#Accelerator)
   - [A Certain Magical Index](#Index)
+- [How to use](#Usage)
 - [Contact](#Contact)
 - [References](#References)
 
@@ -38,7 +39,7 @@ With regard to the dataset, I collected about 2000 audio clips from [ピオフ�
 
 - Demo
 
-<h2 id="How to use">How to use</h2>
+<h2 id="Usage">How to use</h2>
 
 ### Train
 
