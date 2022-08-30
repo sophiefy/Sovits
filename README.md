@@ -14,6 +14,8 @@
 
 <h2 id="Update">Update</h2>
 
+- 30/8 Start training model of Shiki Natsume!
+
 - 29/8 Start training model of Accelerator!
 
 <h2 id="Introduction">Introduction</h2>
