@@ -40,7 +40,56 @@ With regard to the dataset, I collected about 2000 audio clips from [ピオフ�
 
 <h2 id="How to use">How to use</h2>
 
-Under construction...
+### Train
+
+#### Prepare dataset
+
+Audio should be `wav` file, with mono channel and a sampling rate of 22050 Hz. 
+
+Your dataset should be like:
+
+```
+└───wavs
+    ├───dev
+    │   ├───LJ001-0001.wav
+    │   ├───...
+    │   └───LJ050-0278.wav
+    └───train
+        ├───LJ002-0332.wav
+        ├───...
+        └───LJ047-0007.wav
+```
+
+#### Extract speech units
+
+Utilize the content encoder to extract speech units in the audio.
+
+For more information, refer to this repo.
+
+```python
+cd hubert
+python3 encode.py soft path/to/wavs/directory path/to/soft/directory --extension .wav
+```
+Then you need to generate filelists for both your training and validation files. 
+
+Your filelists should look like:
+
+```
+path/to/wav|path/to/unit
+...
+```
+
+#### Train Sovits
+
+```
+python train.py -c configs/config.json -m model_name
+```
+
+You may also refer to [train.ipynb](train.ipynb)
+
+### Inference
+
+Please refer to [inference.ipynb](inference.ipynb)
 
 <h2 id="Contact">Contact</h2>
 
