@@ -10,6 +10,7 @@
   - [Shiki Natsume](#Natsume)
 - [How to use](#Usage)
 - [Contact](#Contact)
+- [Acknowledgement](#Ack)
 - [References](#References)
 
 <h2 id="Update">Update</h2>
@@ -130,6 +131,10 @@ Please refer to [inference.ipynb](inference.ipynb)
 QQ: 2235306122
 
 BILIBILI: [Francis-Komizu](https://space.bilibili.com/636704927)
+
+<h2 id="Ack">Ackowledgement</h2>
+
+Special thanks to [Rcell](https://space.bilibili.com/343303724/?spm_id_from=333.999.0.0) for giving me both inspiration and advice!
 
 <h2 id="References">References</h2>
 
