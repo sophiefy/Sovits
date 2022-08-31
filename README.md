@@ -42,7 +42,7 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 
 <h3 id="Index">A Certain Magical Index</h3>
 
-![index](assets/cover3.png)
+![index](assets/cover5.png)
 
 - Description
 
