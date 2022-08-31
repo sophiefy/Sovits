@@ -32,7 +32,7 @@
   },
   "model": {
     "inter_channels": 192,
-    "hidden_channels": 192,
+    "hidden_channels": 256,
     "filter_channels": 768,
     "n_heads": 2,
     "n_layers": 6,
