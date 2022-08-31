@@ -21,8 +21,8 @@ logging.getLogger('numba').setLevel(logging.WARNING)
 import commons
 import utils
 from data_utils import (
-  TextAudioSpeakerLoader,
-  TextAudioSpeakerCollate,
+  UnitAudioSpeakerLoader,
+  UnitAudioSpeakerCollate,
   DistributedBucketSampler
 )
 from models import (
@@ -36,8 +36,6 @@ from losses import (
   kl_loss
 )
 from mel_processing import mel_spectrogram_torch, spec_to_mel_torch
-from text.symbols import symbols
-
 
 torch.backends.cudnn.benchmark = True
 global_step = 0
@@ -68,7 +66,7 @@ def run(rank, n_gpus, hps):
   torch.manual_seed(hps.train.seed)
   torch.cuda.set_device(rank)
 
-  train_dataset = TextAudioSpeakerLoader(hps.data.training_files, hps.data)
+  train_dataset = UnitAudioSpeakerLoader(hps.data.training_files, hps.data)
   train_sampler = DistributedBucketSampler(
       train_dataset,
       hps.train.batch_size,
@@ -76,17 +74,16 @@ def run(rank, n_gpus, hps):
       num_replicas=n_gpus,
       rank=rank,
       shuffle=True)
-  collate_fn = TextAudioSpeakerCollate()
+  collate_fn = UnitAudioSpeakerCollate()
   train_loader = DataLoader(train_dataset, num_workers=8, shuffle=False, pin_memory=True,
       collate_fn=collate_fn, batch_sampler=train_sampler)
   if rank == 0:
-    eval_dataset = TextAudioSpeakerLoader(hps.data.validation_files, hps.data)
+    eval_dataset = UnitAudioSpeakerLoader(hps.data.validation_files, hps.data)
     eval_loader = DataLoader(eval_dataset, num_workers=8, shuffle=False,
         batch_size=hps.train.batch_size, pin_memory=True,
         drop_last=False, collate_fn=collate_fn)
 
   net_g = SynthesizerTrn(
-      len(symbols),
       hps.data.filter_length // 2 + 1,
       hps.train.segment_size // hps.data.hop_length,
       n_speakers=hps.data.n_speakers,
@@ -145,6 +142,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
     spec, spec_lengths = spec.cuda(rank, non_blocking=True), spec_lengths.cuda(rank, non_blocking=True)
     y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
     speakers = speakers.cuda(rank, non_blocking=True)
+    x, x_lengths = x.half(), x_lengths.half()
 
     with autocast(enabled=hps.train.fp16_run):
       y_hat, l_length, attn, ids_slice, x_mask, z_mask,\
@@ -245,6 +243,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
         spec, spec_lengths = spec.cuda(0), spec_lengths.cuda(0)
         y, y_lengths = y.cuda(0), y_lengths.cuda(0)
         speakers = speakers.cuda(0)
+        x, x_lengths = x.float(), x_lengths.float()
 
         # remove else
         x = x[:1]
