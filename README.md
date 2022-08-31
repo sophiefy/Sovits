@@ -14,6 +14,8 @@
 
 <h2 id="Update">Update</h2>
 
+- 30/8 Multi-speaker training is available!
+
 - 30/8 Start training model of Shiki Natsume!
 
 - 29/8 Start training model of Accelerator!
@@ -83,21 +85,36 @@ For more information, refer to [this repo](https://github.com/bshall/acoustic-mo
 cd hubert
 python3 encode.py soft path/to/wavs/directory path/to/soft/directory --extension .wav
 ```
-Then you need to generate filelists for both your training and validation files. 
+Then you need to generate filelists for both your training and validation files. It's recommended that you prepare your filelists beforehand!
 
 Your filelists should look like:
+
+Single speaker:
 
 ```
 path/to/wav|path/to/unit
 ...
 ```
 
+Multi-speaker:
+
+```
+path/to/wav|id|path/to/unit
+...
+```
+
 #### Train Sovits
 
-Multi-speaker training is not supported yet...
+Single speaker:
 
 ```
 python train.py -c configs/config.json -m model_name
+```
+
+Multi-speaker:
+
+```
+python train_ms.py -c configs/config.json -m model_name
 ```
 
 You may also refer to [train.ipynb](train.ipynb)
