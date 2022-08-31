@@ -14,11 +14,13 @@
 
 <h2 id="Update">Update</h2>
 
+- 30/8 Start training model of *A Certain Magical Index*!
+
 - 30/8 Multi-speaker training is available!
 
-- 30/8 Start training model of Shiki Natsume!
+- 30/8 Start training model of *Shiki Natsume*!
 
-- 29/8 Start training model of Accelerator!
+- 29/8 Start training model of *Accelerator*!
 
 <h2 id="Introduction">Introduction</h2>
 
