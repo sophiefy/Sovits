@@ -94,6 +94,8 @@ path/to/wav|path/to/unit
 
 #### Train Sovits
 
+Multi-speaker training is not supported yet...
+
 ```
 python train.py -c configs/config.json -m model_name
 ```
