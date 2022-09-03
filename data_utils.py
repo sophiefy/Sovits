@@ -37,6 +37,7 @@ class UnitAudioLoader(torch.utils.data.Dataset):
     def get_unit_audio_pair(self, unit_audio_pairs):
         audio_path, unit_path = unit_audio_pairs[0], unit_audio_pairs[1]
         unit = np.load(unit_path)
+        # unit = torch.FloatTensor(unit)
         unit = torch.LongTensor(unit)
         spec, wav = self.get_audio(audio_path)
         return (unit, spec, wav)
@@ -143,6 +144,7 @@ class UnitAudioSpeakerLoader(torch.utils.data.Dataset):
         # separate filename, speaker_id and text
         audio_path, sid, unit_path = unit_sid_audio_pair[0], unit_sid_audio_pair[1], unit_sid_audio_pair[2]
         unit = np.load(unit_path)
+        # unit = torch.FloatTensor(unit)
         unit = torch.LongTensor(unit)
         spec, wav = self.get_audio(audio_path)
         sid = self.get_sid(sid)
