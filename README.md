@@ -15,6 +15,8 @@
 
 <h2 id="Update">Update</h2>
 
+- 3/9 Corrected a signficant error!
+
 - 30/8 Start training model of *A Certain Magical Index*!
 
 - 30/8 Multi-speaker training is available!
