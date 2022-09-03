@@ -143,6 +143,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
     y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
     speakers = speakers.cuda(rank, non_blocking=True)
     # x, x_lengths = x.half(), x_lengths.half()
+    x_length = x_lengths.half()
 
     with autocast(enabled=hps.train.fp16_run):
       y_hat, l_length, attn, ids_slice, x_mask, z_mask,\
