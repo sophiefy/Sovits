@@ -142,7 +142,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
     spec, spec_lengths = spec.cuda(rank, non_blocking=True), spec_lengths.cuda(rank, non_blocking=True)
     y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
     speakers = speakers.cuda(rank, non_blocking=True)
-    x, x_lengths = x.half(), x_lengths.half()
+    # x, x_lengths = x.half(), x_lengths.half()
 
     with autocast(enabled=hps.train.fp16_run):
       y_hat, l_length, attn, ids_slice, x_mask, z_mask,\
@@ -243,7 +243,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
         spec, spec_lengths = spec.cuda(0), spec_lengths.cuda(0)
         y, y_lengths = y.cuda(0), y_lengths.cuda(0)
         speakers = speakers.cuda(0)
-        x, x_lengths = x.float(), x_lengths.float()
+        # x, x_lengths = x.float(), x_lengths.float()
 
         # remove else
         x = x[:1]
