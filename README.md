@@ -14,15 +14,13 @@
 
 <h2 id="Update">Update</h2>
 
+- Colab demo is available!
+
 - 3/9 Corrected a signficant error!
 
 - 30/8 Start training model of *A Certain Magical Index*!
 
 - 30/8 Multi-speaker training is available!
-
-- 30/8 Start training model of *Shiki Natsume*!
-
-- 29/8 Start training model of *Accelerator*!
 
 <h2 id="Introduction">Introduction</h2>
 
@@ -38,6 +36,13 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 ![index](assets/cover5.png)
 
 - Description
+
+|Speaker|ID|
+|-|-|
+|一方通行|0|
+|上条当麻|1|
+|御坂美琴|2|
+|白井黑子|3|
 
 - Demo
   - Colab: [Sovits (魔法禁书目录)](https://colab.research.google.com/drive/1OjfH2zpRkLFRp92aU6jAGhqZNopfZMjC?usp=sharing)
