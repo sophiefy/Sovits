@@ -5,7 +5,6 @@
 - [Update](#Update)
 - [Introduction](#Introduction)
 - [Models](#Models)
-  - [A Certain Scientific Accelerator](#Accelerator)
   - [A Certain Magical Index](#Index)
   - [Shiki Natsume](#Natsume)
 - [How to use](#Usage)
@@ -34,14 +33,6 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 
 <h2 id="Models">Models</h2>
 
-<h3 id="Accelerator">A Certain Scientific Accelerator</h3>
-
-![accelerator](assets/cover4.png)
-
-- Description
-
-- Demo
-
 <h3 id="Index">A Certain Magical Index</h3>
 
 ![index](assets/cover5.png)
@@ -49,6 +40,8 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 - Description
 
 - Demo
+  - Colab: [Sovits (魔法禁书目录)](https://colab.research.google.com/drive/1OjfH2zpRkLFRp92aU6jAGhqZNopfZMjC?usp=sharing)
+  - BILIBILI: [基于Sovits的4人声音转换模型](https://www.bilibili.com/video/BV1zY4y1T71W?share_source=copy_web&vd_source=630b87174c967a898cae3765fba3bfa8)
 
 <h3 id="Natsume">Shiki Natsume</h3>
 
