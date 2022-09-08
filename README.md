@@ -44,6 +44,10 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 |御坂美琴|2|
 |白井黑子|3|
 
+- Model: [Google drive](https://drive.google.com/file/d/1QfLYyqCEKlqC6fLYccISoIRxeqKEUtLs/view?usp=sharing)
+
+- Config: in this repository
+
 - Demo
   - Colab: [Sovits (魔法禁书目录)](https://colab.research.google.com/drive/1OjfH2zpRkLFRp92aU6jAGhqZNopfZMjC?usp=sharing)
   - BILIBILI: [基于Sovits的4人声音转换模型](https://www.bilibili.com/video/BV1zY4y1T71W?share_source=copy_web&vd_source=630b87174c967a898cae3765fba3bfa8)
@@ -55,6 +59,10 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 - Description
 
 Single speaker model of Shiki Natsume.
+
+- Model: [Google drive](https://drive.google.com/file/d/1eco4a1KTQt6YHv6Nza9XesF3Ao6JktBL/view?usp=sharing)
+
+- Config: in this repository
 
 - Demo
   - Colab: [Sovits (四季夏目)](https://colab.research.google.com/drive/190IbYEorG1wnw-QbUPH9SD6JytLF0KRv?usp=sharing)
