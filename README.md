@@ -54,7 +54,11 @@ If you are interested in the performance of Soft-VC, you may refer to [this demo
 
 - Description
 
+Single speaker model of Shiki Natsume.
+
 - Demo
+  - Colab: [Sovits (四季夏目)](https://colab.research.google.com/drive/190IbYEorG1wnw-QbUPH9SD6JytLF0KRv?usp=sharing)
+  - BILIBILI: [枣子姐变声器](https://www.bilibili.com/video/BV13e411u7f1?share_source=copy_web&vd_source=630b87174c967a898cae3765fba3bfa8)
 
 <h2 id="Usage">How to use</h2>
 
