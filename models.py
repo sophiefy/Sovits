@@ -63,7 +63,7 @@ class StochasticDurationPredictor(nn.Module):
         F0 = torch.detach(F0)
         F0 = self.F0_conv(F0)  # F0_conv [b, 128, 5, t]
         F0_1, F0_2, F0_3, F0_4, F0_5 = F0.split([1, 1, 1, 1, 1], dim=2)
-        F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1)  # F0 [b, 640, t]
+        F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1).squeeze(2)  # F0 [b, 640, t]
         F0 = F.adaptive_avg_pool2d(F0, [x.shape[-2], x.shape[-1]])
         x = x + F0
 
@@ -144,7 +144,7 @@ class DurationPredictor(nn.Module):
         F0 = torch.detach(F0)
         F0 = self.F0_conv(F0)  # F0_conv [b, 128, 5, t]
         F0_1, F0_2, F0_3, F0_4, F0_5 = F0.split([1, 1, 1, 1, 1], dim=2)
-        F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1)  # F0 [b, 640, t]
+        F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1).squeeze(2)  # F0 [b, 640, t]
         F0 = F.adaptive_avg_pool2d(F0, [x.shape[-2], x.shape[-1]])
         x = x + F0
 
@@ -300,7 +300,7 @@ class Generator(torch.nn.Module):
         if F0 is not None:
           F0 = self.F0_conv(F0) # F0_conv [b, 128, 5, t]
           F0_1, F0_2, F0_3, F0_4, F0_5 = F0.split([1, 1, 1, 1, 1], dim=2)
-          F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1) # F0 [b, 640, t]
+          F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1).squeeze(2) # F0 [b, 640, t]
           F0 = F.adaptive_avg_pool2d(F0, [x.shape[-2], x.shape[-1]])
           x = x + F0
 
