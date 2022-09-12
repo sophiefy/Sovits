@@ -14,6 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.cuda.amp import autocast, GradScaler
 
 from JDC.model import JDCNet
+from mel_processing import preprocess
 
 import librosa
 import logging
@@ -152,12 +153,16 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
     for batch_idx, (x, x_lengths, spec, spec_lengths, y, y_lengths) in enumerate(train_loader):
         x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
         spec, spec_lengths = spec.cuda(rank, non_blocking=True), spec_lengths.cuda(rank, non_blocking=True)
-        y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
+        
         x_length = x_lengths.float()
         
         with autocast(enabled=hps.train.fp16_run):
+            y_mels = preprocess(y)
             with torch.no_grad():
-                F0 = F0_model.get_feature_GAN(y)
+              y_mels = y_mels.half().cuda(rank)
+              F0 = F0_model.get_feature_GAN(y_mels)
+
+            y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
 
             y_hat, l_length, attn, ids_slice, x_mask, z_mask, \
             (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths, F0=F0)
@@ -242,8 +247,8 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                     scalars=scalar_dict)
 
             if global_step % hps.train.eval_interval == 0:
-                evaluate(hps, net_g, eval_loader, writer_eval)
-                # model_name = os.path.split(hps.model_dir)[1]
+                evaluate(hps, net_g, F0_model, eval_loader, writer_eval)
+
                 utils.save_checkpoint(net_g, optim_g, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "G_{}.pth".format(global_step)))
                 utils.save_checkpoint(net_d, optim_d, hps.train.learning_rate, epoch,
@@ -254,15 +259,19 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
         logger.info('====> Epoch: {}'.format(epoch))
 
 
-def evaluate(hps, generator, eval_loader, writer_eval):
+def evaluate(hps, generator, F0_model, eval_loader, writer_eval):
     generator.eval()
     with torch.no_grad():
         for batch_idx, (x, x_lengths, spec, spec_lengths, y, y_lengths) in enumerate(eval_loader):
             x, x_lengths = x.cuda(0), x_lengths.cuda(0)
             spec, spec_lengths = spec.cuda(0), spec_lengths.cuda(0)
-            y, y_lengths = y.cuda(0), y_lengths.cuda(0)
             x, x_lengths = x.float(), x_lengths.float()
 
+            y_mels = preprocess(y)
+            y_mels = y_mels.half().cuda(0)
+            F0 = F0_model.get_feature_GAN(y_mels)
+
+            y, y_lengths = y.cuda(0), y_lengths.cuda(0)
             # remove else
             x = x[:1]
             x_lengths = x_lengths[:1]
@@ -272,7 +281,7 @@ def evaluate(hps, generator, eval_loader, writer_eval):
             y_lengths = y_lengths[:1]
 
             break
-        F0 = F0_model.get_feature_GAN(y)
+
         y_hat, attn, mask, *_ = generator.module.infer(x, x_lengths, F0=F0, max_len=1000)
         y_hat_lengths = mask.sum([1, 2]).long() * hps.data.hop_length
 
