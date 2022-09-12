@@ -14,13 +14,7 @@
 
 <h2 id="Update">Update</h2>
 
-- Colab demo is available!
-
-- 3/9 Corrected a signficant error!
-
-- 30/8 Start training model of *A Certain Magical Index*!
-
-- 30/8 Multi-speaker training is available!
+- Sovits 2.0 is coming soon!
 
 <h2 id="Introduction">Introduction</h2>
 
