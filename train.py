@@ -87,11 +87,15 @@ def run(rank, n_gpus, hps):
                                  drop_last=False, collate_fn=collate_fn)
 
     # load pretrained F0 model
-    F0_path = hps.model.F0_path
-    F0_model = JDCNet(num_class=1, seq_len=192)
-    params = torch.load(F0_path, map_location='cpu')['net']
-    F0_model.load_state_dict(params)
-    F0_model.cuda(rank)
+    F0_path = hps.get('F0_path', False)
+    if F0_path:
+        use_F0_model = True
+        F0_model = JDCNet(num_class=1, seq_len=192)
+        params = torch.load(F0_path, map_location='cpu')['net']
+        F0_model.load_state_dict(params)
+        F0_model.cuda(rank)
+    else:
+        use_F0_model = False
 
     net_g = SynthesizerTrn(
         hps.data.filter_length // 2 + 1,
@@ -128,16 +132,16 @@ def run(rank, n_gpus, hps):
 
     for epoch in range(epoch_str, hps.train.epochs + 1):
         if rank == 0:
-            train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
+            train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], use_F0_model, [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
                                [train_loader, eval_loader], logger, [writer, writer_eval])
         else:
-            train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
+            train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], use_F0_model, [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
                                [train_loader, None], None, None)
         scheduler_g.step()
         scheduler_d.step()
 
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loaders, logger, writers):
+def train_and_evaluate(rank, epoch, hps, nets, use_F0_model, optims, schedulers, scaler, loaders, logger, writers):
     net_g, net_d, F0_model = nets
     optim_g, optim_d = optims
     scheduler_g, scheduler_d = schedulers
@@ -157,10 +161,13 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
         x_length = x_lengths.float()
         
         with autocast(enabled=hps.train.fp16_run):
-            y_mels = preprocess(y)
-            with torch.no_grad():
-              y_mels = y_mels.half().cuda(rank)
-              F0 = F0_model.get_feature_GAN(y_mels)
+            if use_F0_model:
+                y_mels = preprocess(y)
+                with torch.no_grad():
+                  y_mels = y_mels.half().cuda(rank)
+                  F0 = F0_model.get_feature_GAN(y_mels)
+            else:
+                F0 = None
 
             y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
 
@@ -247,7 +254,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                     scalars=scalar_dict)
 
             if global_step % hps.train.eval_interval == 0:
-                evaluate(hps, net_g, F0_model, eval_loader, writer_eval)
+                evaluate(hps, net_g, F0_model, use_F0_model, eval_loader, writer_eval)
 
                 utils.save_checkpoint(net_g, optim_g, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "G_{}.pth".format(global_step)))
@@ -259,7 +266,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
         logger.info('====> Epoch: {}'.format(epoch))
 
 
-def evaluate(hps, generator, F0_model, eval_loader, writer_eval):
+def evaluate(hps, generator, F0_model, use_F0_model, eval_loader, writer_eval):
     generator.eval()
     with torch.no_grad():
         for batch_idx, (x, x_lengths, spec, spec_lengths, y, y_lengths) in enumerate(eval_loader):
@@ -267,9 +274,12 @@ def evaluate(hps, generator, F0_model, eval_loader, writer_eval):
             spec, spec_lengths = spec.cuda(0), spec_lengths.cuda(0)
             x, x_lengths = x.float(), x_lengths.float()
 
-            y_mels = preprocess(y)
-            y_mels = y_mels.half().cuda(0)
-            F0 = F0_model.get_feature_GAN(y_mels)
+            if use_F0_model:
+                y_mels = preprocess(y)
+                y_mels = y_mels.half().cuda(0)
+                F0 = F0_model.get_feature_GAN(y_mels)
+            else:
+                F0 = None
 
             y, y_lengths = y.cuda(0), y_lengths.cuda(0)
             # remove else
