@@ -5,6 +5,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import torch.utils.data
+import torchaudio
 import numpy as np
 import librosa
 import librosa.util as librosa_util
@@ -15,6 +16,16 @@ from librosa.filters import mel as librosa_mel_fn
 
 MAX_WAV_VALUE = 32768.0
 
+to_mel = torchaudio.transforms.MelSpectrogram(
+    n_mels=80, n_fft=2048, win_length=1200, hop_length=300)
+
+mean, std = -4, 4
+
+def preprocess(wave):
+    wave_tensor = wave.float()
+    mel_tensor = to_mel(wave_tensor)
+    mel_tensor = (torch.log(1e-5 + mel_tensor) - mean) / std
+    return mel_tensor
 
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
     """
