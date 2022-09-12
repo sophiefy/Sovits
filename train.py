@@ -13,6 +13,8 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.cuda.amp import autocast, GradScaler
 
+from JDC.model import JDCNet
+
 import librosa
 import logging
 
@@ -83,6 +85,13 @@ def run(rank, n_gpus, hps):
                                  batch_size=hps.train.batch_size, pin_memory=True,
                                  drop_last=False, collate_fn=collate_fn)
 
+    # load pretrained F0 model
+    F0_path = hps.model.F0_path
+    F0_model = JDCNet(num_class=1, seq_len=192)
+    params = torch.load(F0_path, map_location='cpu')['net']
+    F0_model.load_state_dict(params)
+    F0_model.cuda(rank)
+
     net_g = SynthesizerTrn(
         hps.data.filter_length // 2 + 1,
         hps.train.segment_size // hps.data.hop_length,
@@ -118,17 +127,17 @@ def run(rank, n_gpus, hps):
 
     for epoch in range(epoch_str, hps.train.epochs + 1):
         if rank == 0:
-            train_and_evaluate(rank, epoch, hps, [net_g, net_d], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
+            train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
                                [train_loader, eval_loader], logger, [writer, writer_eval])
         else:
-            train_and_evaluate(rank, epoch, hps, [net_g, net_d], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
+            train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler,
                                [train_loader, None], None, None)
         scheduler_g.step()
         scheduler_d.step()
 
 
 def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loaders, logger, writers):
-    net_g, net_d = nets
+    net_g, net_d, F0_model = nets
     optim_g, optim_d = optims
     scheduler_g, scheduler_d = schedulers
     train_loader, eval_loader = loaders
@@ -147,8 +156,11 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
         x_length = x_lengths.float()
         
         with autocast(enabled=hps.train.fp16_run):
+            with torch.no_grad():
+                F0 = F0_model.get_feature_GAN(y)
+
             y_hat, l_length, attn, ids_slice, x_mask, z_mask, \
-            (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths)
+            (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths, F0=F0)
 
             mel = spec_to_mel_torch(
                 spec,
@@ -258,8 +270,10 @@ def evaluate(hps, generator, eval_loader, writer_eval):
             spec_lengths = spec_lengths[:1]
             y = y[:1]
             y_lengths = y_lengths[:1]
+
             break
-        y_hat, attn, mask, *_ = generator.module.infer(x, x_lengths, max_len=1000)
+        F0 = F0_model.get_feature_GAN(y)
+        y_hat, attn, mask, *_ = generator.module.infer(x, x_lengths, F0=F0, max_len=1000)
         y_hat_lengths = mask.sum([1, 2]).long() * hps.data.hop_length
 
         mel = spec_to_mel_torch(
