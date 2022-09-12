@@ -47,12 +47,26 @@ class StochasticDurationPredictor(nn.Module):
     if gin_channels != 0:
       self.cond = nn.Conv1d(gin_channels, filter_channels, 1)
 
-  def forward(self, x, x_mask, w=None, g=None, reverse=False, noise_scale=1.0):
+    # F0 conv layer
+    self.F0_conv = nn.Sequential(
+      modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
+    )
+
+  def forward(self, x, x_mask, w=None, g=None, F0=None, reverse=False, noise_scale=1.0):
     x = torch.detach(x)
     x = self.pre(x)
     if g is not None:
       g = torch.detach(g)
       x = x + self.cond(g)
+
+    if F0 is not None:
+        F0 = torch.detach(F0)
+        F0 = self.F0_conv(F0)  # F0_conv [b, 128, 5, t]
+        F0_1, F0_2, F0_3, F0_4, F0_5 = F0.split([1, 1, 1, 1, 1], dim=2)
+        F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1)  # F0 [b, 640, t]
+        F0 = F.adaptive_avg_pool2d(F0, [x.shape[-2], x.shape[-1]])
+        x = x + F0
+
     x = self.convs(x, x_mask)
     x = self.proj(x) * x_mask
 
@@ -115,11 +129,25 @@ class DurationPredictor(nn.Module):
     if gin_channels != 0:
       self.cond = nn.Conv1d(gin_channels, in_channels, 1)
 
-  def forward(self, x, x_mask, g=None):
+    # F0 conv layer
+    self.F0_conv = nn.Sequential(
+      modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
+    )
+
+  def forward(self, x, x_mask, g=None, F0=None):
     x = torch.detach(x)
     if g is not None:
       g = torch.detach(g)
       x = x + self.cond(g)
+
+    if F0 is not None:
+        F0 = torch.detach(F0)
+        F0 = self.F0_conv(F0)  # F0_conv [b, 128, 5, t]
+        F0_1, F0_2, F0_3, F0_4, F0_5 = F0.split([1, 1, 1, 1, 1], dim=2)
+        F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1)  # F0 [b, 640, t]
+        F0 = F.adaptive_avg_pool2d(F0, [x.shape[-2], x.shape[-1]])
+        x = x + F0
+
     x = self.conv_1(x * x_mask)
     x = torch.relu(x)
     x = self.norm_1(x)
@@ -259,10 +287,22 @@ class Generator(torch.nn.Module):
         if gin_channels != 0:
             self.cond = nn.Conv1d(gin_channels, upsample_initial_channel, 1)
 
-    def forward(self, x, g=None):
+        # F0 conv layer
+        self.F0_conv = nn.Sequential(
+                modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
+            )
+
+    def forward(self, x, g=None, F0=None):
         x = self.conv_pre(x)
         if g is not None:
-          x = x + self.cond(g)
+          x = x + self.cond(g) # g [b, 256, 1] => cond(g) [b, 512, 1]
+
+        if F0 is not None:
+          F0 = self.F0_conv(F0) # F0_conv [b, 128, 5, t]
+          F0_1, F0_2, F0_3, F0_4, F0_5 = F0.split([1, 1, 1, 1, 1], dim=2)
+          F0 = torch.cat([F0_1, F0_2, F0_3, F0_4, F0_5], dim=1) # F0 [b, 640, t]
+          F0 = F.adaptive_avg_pool2d(F0, [x.shape[-2], x.shape[-1]])
+          x = x + F0
 
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, modules.LRELU_SLOPE)
@@ -446,7 +486,7 @@ class SynthesizerTrn(nn.Module):
     if n_speakers > 1:
       self.emb_g = nn.Embedding(n_speakers, gin_channels)
 
-  def forward(self, x, x_lengths, y, y_lengths, sid=None):
+  def forward(self, x, x_lengths, y, y_lengths, sid=None, F0=None):
 
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
     if self.n_speakers > 0:
@@ -471,11 +511,11 @@ class SynthesizerTrn(nn.Module):
 
     w = attn.sum(2)
     if self.use_sdp:
-      l_length = self.dp(x, x_mask, w, g=g)
+      l_length = self.dp(x, x_mask, w, g=g, F0=F0)
       l_length = l_length / torch.sum(x_mask)
     else:
       logw_ = torch.log(w + 1e-6) * x_mask
-      logw = self.dp(x, x_mask, g=g)
+      logw = self.dp(x, x_mask, g=g, F0=F0)
       l_length = torch.sum((logw - logw_)**2, [1,2]) / torch.sum(x_mask) # for averaging 
 
     # expand prior
@@ -483,10 +523,10 @@ class SynthesizerTrn(nn.Module):
     logs_p = torch.matmul(attn.squeeze(1), logs_p.transpose(1, 2)).transpose(1, 2)
 
     z_slice, ids_slice = commons.rand_slice_segments(z, y_lengths, self.segment_size)
-    o = self.dec(z_slice, g=g)
+    o = self.dec(z_slice, g=g, F0=F0)
     return o, l_length, attn, ids_slice, x_mask, y_mask, (z, z_p, m_p, logs_p, m_q, logs_q)
 
-  def infer(self, x, x_lengths, sid=None, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None):
+  def infer(self, x, x_lengths, sid=None, F0=None, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None):
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
     if self.n_speakers > 0:
       g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
@@ -494,9 +534,9 @@ class SynthesizerTrn(nn.Module):
       g = None
 
     if self.use_sdp:
-      logw = self.dp(x, x_mask, g=g, reverse=True, noise_scale=noise_scale_w)
+      logw = self.dp(x, x_mask, g=g, F0=F0, reverse=True, noise_scale=noise_scale_w)
     else:
-      logw = self.dp(x, x_mask, g=g)
+      logw = self.dp(x, x_mask, g=g, F0=F0)
     w = torch.exp(logw) * x_mask * length_scale
     w_ceil = torch.ceil(w)
     y_lengths = torch.clamp_min(torch.sum(w_ceil, [1, 2]), 1).long()
@@ -509,7 +549,7 @@ class SynthesizerTrn(nn.Module):
 
     z_p = m_p + torch.randn_like(m_p) * torch.exp(logs_p) * noise_scale
     z = self.flow(z_p, y_mask, g=g, reverse=True)
-    o = self.dec((z * y_mask)[:,:,:max_len], g=g)
+    o = self.dec((z * y_mask)[:,:,:max_len], g=g, F0=F0)
     return o, attn, y_mask, (z, z_p, m_p, logs_p)
 
   def voice_conversion(self, y, y_lengths, sid_src, sid_tgt):
