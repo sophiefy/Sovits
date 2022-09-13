@@ -14,7 +14,7 @@
 
 <h2 id="Update">Update</h2>
 
-- Sovits 2.0 is coming soon!
+- Sovits 2.0 inference demo is available!
 
 <h2 id="Introduction">Introduction</h2>
 
