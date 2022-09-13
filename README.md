@@ -7,6 +7,7 @@
 - [Models](#Models)
   - [A Certain Magical Index](#Index)
   - [Shiki Natsume](#Natsume)
+  - [Shiki Natsume 2.0](#Natsume2)
 - [How to use](#Usage)
 - [Contact](#Contact)
 - [Acknowledgement](#Ack)
