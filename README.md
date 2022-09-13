@@ -167,3 +167,5 @@ Special thanks to [Rcell](https://space.bilibili.com/343303724/?spm_id_from=333.
 [Soft-VC](https://github.com/bshall/soft-vc)
 
 [vits](https://github.com/jaywalnut310/vits)
+
+[StarGANv2-VC](https://github.com/yl4579/StarGANv2-VC)
