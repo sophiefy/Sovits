@@ -28,8 +28,7 @@
     "mel_fmin": 0.0,
     "mel_fmax": null,
     "add_blank": true,
-    "n_speakers": 0,
-    "cleaned_text": true
+    "n_speakers": 0
   },
   "model": {
     "inter_channels": 192,
