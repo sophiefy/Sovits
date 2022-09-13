@@ -87,8 +87,8 @@ def run(rank, n_gpus, hps):
                                  drop_last=False, collate_fn=collate_fn)
 
     # load pretrained F0 model
-    F0_path = hps.get('F0_path', False)
-    if F0_path:
+    if hps.model.__contains__('F0_path'):
+        F0_path = hps.model.F0_path
         use_F0_model = True
         F0_model = JDCNet(num_class=1, seq_len=192)
         params = torch.load(F0_path, map_location='cpu')['net']
