@@ -9,6 +9,7 @@
   - [Shiki Natsume](#Natsume)
   - [Shiki Natsume 2.0](#Natsume2)
 - [How to use](#Usage)
+- [TODO](#TODO)
 - [Contact](#Contact)
 - [Acknowledgement](#Ack)
 - [References](#References)
@@ -149,6 +150,12 @@ You may also refer to [train.ipynb](train.ipynb)
 ### Inference
 
 Please refer to [inference.ipynb](inference.ipynb)
+
+<h2 id="TODO">TOD0</h2>
+
+- [x] Add F0 model
+- [ ] Add F0 normalization during inference
+- [ ] Add F0 loss
 
 <h2 id="Contact">Contact</h2>
 
