@@ -65,7 +65,7 @@ Single speaker model of Shiki Natsume.
   
 <h3 id="Natsume2">Shiki Natsume 2.0</h3>
 
-![natsume](assets/cover2.png)
+![natsume](assets/cover6.png)
 
 - Description
 
