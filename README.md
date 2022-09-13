@@ -154,7 +154,6 @@ Please refer to [inference.ipynb](inference.ipynb)
 <h2 id="TODO">TOD0</h2>
 
 - [x] Add F0 model
-- [ ] Add F0 normalization during inference
 - [ ] Add F0 loss
 
 <h2 id="Contact">Contact</h2>
