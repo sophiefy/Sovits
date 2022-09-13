@@ -61,6 +61,23 @@ Single speaker model of Shiki Natsume.
 - Demo
   - Colab: [Sovits (四季夏目)](https://colab.research.google.com/drive/190IbYEorG1wnw-QbUPH9SD6JytLF0KRv?usp=sharing)
   - BILIBILI: [枣子姐变声器](https://www.bilibili.com/video/BV13e411u7f1?share_source=copy_web&vd_source=630b87174c967a898cae3765fba3bfa8)
+  
+<h3 id="Natsume2">Shiki Natsume 2.0</h3>
+
+![natsume](assets/cover2.png)
+
+- Description
+
+Single speaker model of Shiki Natsume, trained with F0 feature.
+
+- Model
+
+- Config
+
+- Demo
+  - Colab:
+  - BILIBILI:
+
 
 <h2 id="Usage">How to use</h2>
 
