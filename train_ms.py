@@ -82,6 +82,17 @@ def run(rank, n_gpus, hps):
     eval_loader = DataLoader(eval_dataset, num_workers=8, shuffle=False,
         batch_size=hps.train.batch_size, pin_memory=True,
         drop_last=False, collate_fn=collate_fn)
+    
+   # load pretrained F0 model
+  if hps.model.__contains__('F0_path'):
+      F0_path = hps.model.F0_path
+      use_F0_model = True
+      F0_model = JDCNet(num_class=1, seq_len=192)
+      params = torch.load(F0_path, map_location='cpu')['net']
+      F0_model.load_state_dict(params)
+      F0_model.cuda(rank)
+  else:
+      use_F0_model = False
 
   net_g = SynthesizerTrn(
       hps.data.filter_length // 2 + 1,
@@ -117,15 +128,15 @@ def run(rank, n_gpus, hps):
 
   for epoch in range(epoch_str, hps.train.epochs + 1):
     if rank==0:
-      train_and_evaluate(rank, epoch, hps, [net_g, net_d], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler, [train_loader, eval_loader], logger, [writer, writer_eval])
+      train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], use_F0_model, [optim_g, optim_d], [scheduler_g, scheduler_d], scaler, [train_loader, eval_loader], logger, [writer, writer_eval])
     else:
-      train_and_evaluate(rank, epoch, hps, [net_g, net_d], [optim_g, optim_d], [scheduler_g, scheduler_d], scaler, [train_loader, None], None, None)
+      train_and_evaluate(rank, epoch, hps, [net_g, net_d, F0_model], use_F0_model, [optim_g, optim_d], [scheduler_g, scheduler_d], scaler, [train_loader, None], None, None)
     scheduler_g.step()
     scheduler_d.step()
 
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loaders, logger, writers):
-  net_g, net_d = nets
+def train_and_evaluate(rank, epoch, hps, nets, use_F0_model, optims, schedulers, scaler, loaders, logger, writers):
+  net_g, net_d, F0_model = nets
   optim_g, optim_d = optims
   scheduler_g, scheduler_d = schedulers
   train_loader, eval_loader = loaders
@@ -140,14 +151,24 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
   for batch_idx, (x, x_lengths, spec, spec_lengths, y, y_lengths, speakers) in enumerate(train_loader):
     x, x_lengths = x.cuda(rank, non_blocking=True), x_lengths.cuda(rank, non_blocking=True)
     spec, spec_lengths = spec.cuda(rank, non_blocking=True), spec_lengths.cuda(rank, non_blocking=True)
-    y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
+    
     speakers = speakers.cuda(rank, non_blocking=True)
     # x, x_lengths = x.half(), x_lengths.half()
     x_length = x_lengths.half()
 
     with autocast(enabled=hps.train.fp16_run):
+      if use_F0_model:
+          y_mels = preprocess(y)
+          with torch.no_grad():
+              y_mels = y_mels.half().cuda(rank)
+              F0 = F0_model.get_feature_GAN(y_mels)
+      else:
+          F0 = None
+          
+      y, y_lengths = y.cuda(rank, non_blocking=True), y_lengths.cuda(rank, non_blocking=True)
+      
       y_hat, l_length, attn, ids_slice, x_mask, z_mask,\
-      (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths, speakers)
+      (z, z_p, m_p, logs_p, m_q, logs_q) = net_g(x, x_lengths, spec, spec_lengths, speakers, F0=F0)
 
       mel = spec_to_mel_torch(
           spec, 
@@ -227,7 +248,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
           scalars=scalar_dict)
 
       if global_step % hps.train.eval_interval == 0:
-        evaluate(hps, net_g, eval_loader, writer_eval)
+        evaluate(hps, net_g, F0_model, use_F0_model, eval_loader, writer_eval)
         utils.save_checkpoint(net_g, optim_g, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "G_{}.pth".format(global_step)))
         utils.save_checkpoint(net_d, optim_d, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "D_{}.pth".format(global_step)))
     global_step += 1
@@ -236,15 +257,24 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
     logger.info('====> Epoch: {}'.format(epoch))
 
  
-def evaluate(hps, generator, eval_loader, writer_eval):
+def evaluate(hps, generator, F0_model, use_F0_model, eval_loader, writer_eval):
     generator.eval()
     with torch.no_grad():
       for batch_idx, (x, x_lengths, spec, spec_lengths, y, y_lengths, speakers) in enumerate(eval_loader):
         x, x_lengths = x.cuda(0), x_lengths.cuda(0)
         spec, spec_lengths = spec.cuda(0), spec_lengths.cuda(0)
-        y, y_lengths = y.cuda(0), y_lengths.cuda(0)
+        
         speakers = speakers.cuda(0)
         # x, x_lengths = x.float(), x_lengths.float()
+        
+        if use_F0_model:
+            y_mels = preprocess(y)
+            y_mels = y_mels.half().cuda(0)
+            F0 = F0_model.get_feature_GAN(y_mels)
+        else:
+            F0 = None
+        
+        y, y_lengths = y.cuda(0), y_lengths.cuda(0)
 
         # remove else
         x = x[:1]
