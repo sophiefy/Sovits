@@ -16,6 +16,7 @@
 
 <h2 id="Update">Update</h2>
 
+- Sovits 2.0 demo video and Sovits 3.0 is coming!
 - Sovits 2.0 inference demo is available!
 
 <h2 id="Introduction">Introduction</h2>
