@@ -79,9 +79,7 @@ Single speaker model of Shiki Natsume, trained with F0 feature.
 - Config
 
 - Demo
-  - Colab:
-  - BILIBILI:
-
+  - Colab: [Sovits2 (四季夏目)](https://colab.research.google.com/drive/11GC7uAgPya2UIb5jfIuwnIqUN2qPF37w?usp=sharing)
 
 <h2 id="Usage">How to use</h2>
 
