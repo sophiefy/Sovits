@@ -74,9 +74,9 @@ Single speaker model of Shiki Natsume.
 
 Single speaker model of Shiki Natsume, trained with F0 feature.
 
-- Model
+- Model: [Google drive](https://drive.google.com/file/d/1-0s7NBk49MMJzF-aBaqfuclVgF4yJzXa/view?usp=sharing)
 
-- Config
+- Config: in this repository
 
 - Demo
   - Colab: [Sovits2 (四季夏目)](https://colab.research.google.com/drive/11GC7uAgPya2UIb5jfIuwnIqUN2qPF37w?usp=sharing)
