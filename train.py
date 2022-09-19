@@ -100,7 +100,7 @@ def run(rank, n_gpus, hps):
     net_g = SynthesizerTrn(
         hps.data.filter_length // 2 + 1,
         hps.train.segment_size // hps.data.hop_length,
-        use_F0_model = use_F0_model,
+        use_F0_model=use_F0_model,
         **hps.model).cuda(rank)
     net_d = MultiPeriodDiscriminator(hps.model.use_spectral_norm).cuda(rank)
     optim_g = torch.optim.AdamW(
