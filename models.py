@@ -15,7 +15,7 @@ from commons import init_weights, get_padding
 
 
 class StochasticDurationPredictor(nn.Module):
-  def __init__(self, in_channels, filter_channels, kernel_size, p_dropout, n_flows=4, gin_channels=0):
+  def __init__(self, in_channels, filter_channels, kernel_size, p_dropout, n_flows=4, gin_channels=0, use_F0_model=False):
     super().__init__()
     filter_channels = in_channels # it needs to be removed from future version.
     self.in_channels = in_channels
@@ -24,6 +24,7 @@ class StochasticDurationPredictor(nn.Module):
     self.p_dropout = p_dropout
     self.n_flows = n_flows
     self.gin_channels = gin_channels
+    self.use_F0_model = use_F0_model
 
     self.log_flow = modules.Log()
     self.flows = nn.ModuleList()
@@ -48,9 +49,10 @@ class StochasticDurationPredictor(nn.Module):
       self.cond = nn.Conv1d(gin_channels, filter_channels, 1)
 
     # F0 conv layer
-    self.F0_conv = nn.Sequential(
-      modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
-    )
+    if use_F0_model:
+      self.F0_conv = nn.Sequential(
+        modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
+      )
 
   def forward(self, x, x_mask, w=None, g=None, F0=None, reverse=False, noise_scale=1.0):
     x = torch.detach(x)
@@ -110,7 +112,7 @@ class StochasticDurationPredictor(nn.Module):
 
 
 class DurationPredictor(nn.Module):
-  def __init__(self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0):
+  def __init__(self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0, use_F0_model=False):
     super().__init__()
 
     self.in_channels = in_channels
@@ -118,6 +120,7 @@ class DurationPredictor(nn.Module):
     self.kernel_size = kernel_size
     self.p_dropout = p_dropout
     self.gin_channels = gin_channels
+    self.use_F0_model = use_F0_model
 
     self.drop = nn.Dropout(p_dropout)
     self.conv_1 = nn.Conv1d(in_channels, filter_channels, kernel_size, padding=kernel_size//2)
@@ -130,9 +133,10 @@ class DurationPredictor(nn.Module):
       self.cond = nn.Conv1d(gin_channels, in_channels, 1)
 
     # F0 conv layer
-    self.F0_conv = nn.Sequential(
-      modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
-    )
+    if use_F0_model:
+      self.F0_conv = nn.Sequential(
+        modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
+      )
 
   def forward(self, x, x_mask, g=None, F0=None):
     x = torch.detach(x)
@@ -262,7 +266,7 @@ class PosteriorEncoder(nn.Module):
 
 
 class Generator(torch.nn.Module):
-    def __init__(self, initial_channel, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=0):
+    def __init__(self, initial_channel, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=0, use_F0_model=False):
         super(Generator, self).__init__()
         self.num_kernels = len(resblock_kernel_sizes)
         self.num_upsamples = len(upsample_rates)
@@ -288,9 +292,10 @@ class Generator(torch.nn.Module):
             self.cond = nn.Conv1d(gin_channels, upsample_initial_channel, 1)
 
         # F0 conv layer
-        self.F0_conv = nn.Sequential(
-                modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
-            )
+        if use_F0_model:
+          self.F0_conv = nn.Sequential(
+                  modules.ResBlock3(256, int(256 / 2), normalize=True, downsample="half"),
+              )
 
     def forward(self, x, g=None, F0=None):
         x = self.conv_pre(x)
@@ -442,6 +447,7 @@ class SynthesizerTrn(nn.Module):
     upsample_kernel_sizes,
     n_speakers=0,
     gin_channels=0,
+    use_F0_model=False,
     use_sdp=True,
     **kwargs):
 
@@ -463,6 +469,7 @@ class SynthesizerTrn(nn.Module):
     self.segment_size = segment_size
     self.n_speakers = n_speakers
     self.gin_channels = gin_channels
+    self.use_F0_model = use_F0_model
 
     self.use_sdp = use_sdp
 
@@ -474,14 +481,14 @@ class SynthesizerTrn(nn.Module):
         n_layers,
         kernel_size,
         p_dropout)
-    self.dec = Generator(inter_channels, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
+    self.dec = Generator(inter_channels, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, use_F0_model=use_F0_model)
     self.enc_q = PosteriorEncoder(spec_channels, inter_channels, hidden_channels, 5, 1, 16, gin_channels=gin_channels)
     self.flow = ResidualCouplingBlock(inter_channels, hidden_channels, 5, 1, 4, gin_channels=gin_channels)
 
     if use_sdp:
-      self.dp = StochasticDurationPredictor(hidden_channels, 192, 3, 0.5, 4, gin_channels=gin_channels)
+      self.dp = StochasticDurationPredictor(hidden_channels, 192, 3, 0.5, 4, gin_channels=gin_channels, use_F0_model=use_F0_model)
     else:
-      self.dp = DurationPredictor(hidden_channels, 256, 3, 0.5, gin_channels=gin_channels)
+      self.dp = DurationPredictor(hidden_channels, 256, 3, 0.5, gin_channels=gin_channels, use_F0_model=use_F0_model)
 
     if n_speakers > 1:
       self.emb_g = nn.Embedding(n_speakers, gin_channels)
