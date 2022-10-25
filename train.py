@@ -96,6 +96,7 @@ def run(rank, n_gpus, hps):
         F0_model.cuda(rank)
     else:
         use_F0_model = False
+        F0_model = None
 
     net_g = SynthesizerTrn(
         hps.data.filter_length // 2 + 1,
